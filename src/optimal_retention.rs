@@ -424,6 +424,12 @@ pub fn simulate(
             .round()
             .clamp(1.0, config.max_ivl);
 
+        if day_index as f32 + ivl > config.learn_span as f32 {
+            ivl = next_interval(card.stability, 0.9_f32.max(desired_retention))
+                .round()
+                .clamp(1.0, config.max_ivl);
+        }
+
         if let Some(PostSchedulingFn(cb)) = &config.post_scheduling_fn {
             ivl = cb(ivl, config.max_ivl, day_index, &due_cnt_per_day, &mut rng);
         }
