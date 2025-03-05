@@ -432,7 +432,7 @@ pub fn simulate(
         let days_until_deadline = config.learn_span as f32 - card.due;
         // If we're skipping the "deadline zone"
         if card.last_date < deadline_start_day // We haven't reviewed in the deadline zone before
-            && days_until_deadline < ivl
+            && days_until_deadline < ivl // We would otherwise schedule past learn_span
         {
             // Override FSRS entirely?
             ivl = (rng.gen_range(0.75..=1.) * (days_until_deadline - 1.))
