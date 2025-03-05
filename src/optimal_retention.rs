@@ -424,9 +424,9 @@ pub fn simulate(
             .round()
             .clamp(1.0, config.max_ivl);
 
-        if let Some(PostSchedulingFn(cb)) = &config.post_scheduling_fn {
+        /*if let Some(PostSchedulingFn(cb)) = &config.post_scheduling_fn {
             ivl = cb(ivl, config.max_ivl, day_index, &due_cnt_per_day, &mut rng);
-        }
+        }*/
 
         let deadline_start_day = 50.;
         let days_until_deadline = config.learn_span as f32 - card.due;
