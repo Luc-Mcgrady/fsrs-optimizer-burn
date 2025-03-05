@@ -428,6 +428,18 @@ pub fn simulate(
             ivl = cb(ivl, config.max_ivl, day_index, &due_cnt_per_day, &mut rng);
         }
 
+        let deadline_start_day = 50.;
+        let days_until_deadline = config.learn_span as f32 - card.due;
+        // If we're skipping the "deadline zone"
+        if card.last_date < deadline_start_day // We haven't reviewed in the deadline zone before
+            && days_until_deadline > ivl
+        {
+            // Override FSRS entirely?
+            ivl = (rng.gen_range(0.75..=1.) * (days_until_deadline - 1.))
+                .round()
+                .clamp(1.0, config.max_ivl);
+        };
+
         card.last_date = day_index as f32;
         card.due = day_index as f32 + ivl;
         card.interval = ivl;
