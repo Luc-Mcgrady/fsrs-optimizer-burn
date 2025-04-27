@@ -544,6 +544,28 @@ pub fn simulate(
     })
 }
 
+pub fn average_f_power_forgetting_curve(
+    learn_span: usize,
+    cards: &[Card],
+    decay: f32,
+) -> f32 {
+    let factor = 0.9_f32.powf(1.0 / decay) - 1.0;
+    let exp = decay + 1.0;
+    let den_factor = factor * exp;
+
+    // Closure equivalent to the inner integral function
+    let integral_calc = |card: &Card| -> f32 {
+        // Performs element-wise: (s / den_factor) * (1.0 + factor * t / s).powf(exp)
+        let t1 = card.last_date - learn_span as f32;
+        let t2 = t1 + 365.;
+        (card.stability / den_factor) * (1.0 + factor * t2 / card.stability).powf(exp) - 
+        (card.stability / den_factor) * (1.0 + factor * t1 / card.stability).powf(exp)  
+    };
+
+    // Calculate integral difference and divide by time difference element-wise
+    cards.iter().map(integral_calc).sum::<f32>()
+}
+
 fn sample<F>(
     config: &SimulatorConfig,
     parameters: &Parameters,
@@ -555,6 +577,7 @@ fn sample<F>(
 where
     F: FnMut() -> bool,
 {
+    let parameters = check_and_fill_parameters(&parameters)?;
     if !progress() {
         return Err(FSRSError::Interrupted);
     }
@@ -564,17 +587,18 @@ where
             let SimulationResult {
                 memorized_cnt_per_day,
                 cost_per_day,
+                cards,
                 ..
             } = simulate(
                 config,
-                parameters,
+                &parameters,
                 desired_retention,
                 Some((i + 42).try_into().unwrap()),
                 cards.clone(),
             )?;
             let total_memorized = memorized_cnt_per_day[memorized_cnt_per_day.len() - 1];
             let total_cost = cost_per_day.iter().sum::<f32>();
-            Ok(total_cost / total_memorized)
+            Ok(total_cost / average_f_power_forgetting_curve(config.learn_span, &cards, -parameters[20]))
         })
         .collect();
     results.map(|v| v.iter().sum::<f32>() / n as f32)
