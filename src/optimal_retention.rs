@@ -553,17 +553,18 @@ pub fn average_f_power_forgetting_curve(
     let exp = decay + 1.0;
     let den_factor = factor * exp;
 
+    let offset = 365. * 50.;
     // Closure equivalent to the inner integral function
     let integral_calc = |card: &Card| -> f32 {
         // Performs element-wise: (s / den_factor) * (1.0 + factor * t / s).powf(exp)
-        let t1 = card.last_date - learn_span as f32;
-        let t2 = t1 + 365.;
+        let t1 = learn_span as f32 - card.last_date;
+        let t2 = t1 + offset;
         (card.stability / den_factor) * (1.0 + factor * t2 / card.stability).powf(exp) - 
-        (card.stability / den_factor) * (1.0 + factor * t1 / card.stability).powf(exp)  
+        (card.stability / den_factor) * (1.0 + factor * t1 / card.stability).powf(exp)
     };
 
     // Calculate integral difference and divide by time difference element-wise
-    cards.iter().map(integral_calc).sum::<f32>()
+    cards.iter().map(integral_calc).sum::<f32>() / offset
 }
 
 fn sample<F>(
