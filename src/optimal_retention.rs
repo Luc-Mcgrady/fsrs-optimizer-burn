@@ -246,8 +246,19 @@ fn next_interval(w: &[f32], stability: f32, desired_retention: f32) -> f32 {
 const RECALL_COST: f32 = 7.0;
 const FORGET_COST: f32 = 23.0;
 
-pub fn expected_workload(w: &[f32], dr: f32, learn_day_limit: usize) -> f32 {
-    _expected_workload(w, 1.0, 0.0, 0.0, 0.0, dr, 0.0, 0.0, learn_day_limit as f32)
+pub fn expected_workload(w: &[f32], dr: f32, learn_day_limit: usize) -> Result<f32> {
+    let w = &check_and_fill_parameters(w)?;
+    Ok(_expected_workload(
+        w,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        dr,
+        0.0,
+        0.0,
+        learn_day_limit as f32,
+    ))
 }
 
 #[allow(clippy::too_many_arguments)]
