@@ -657,12 +657,14 @@ where
     if !progress() {
         return Err(FSRSError::Interrupted);
     }
+    let w = check_and_fill_parameters(parameters)?;
     let results: Result<Vec<f32>, FSRSError> = (0..n)
         .into_par_iter()
         .map(|i| {
             let SimulationResult {
                 memorized_cnt_per_day,
                 cost_per_day,
+                cards: resultant_cards,
                 ..
             } = simulate(
                 config,
@@ -671,9 +673,11 @@ where
                 Some((i + 42).try_into().unwrap()),
                 cards.clone(),
             )?;
-            let total_memorized = memorized_cnt_per_day[memorized_cnt_per_day.len() - 1];
             let total_cost = cost_per_day.iter().sum::<f32>();
-            Ok(total_cost / total_memorized)
+            Ok(total_cost
+                / resultant_cards.into_iter().fold(0., |p, c| {
+                    p + (c.retention_on(&w, config.learn_span as f32) * c.stability)
+                }))
         })
         .collect();
     results.map(|v| v.iter().sum::<f32>() / n as f32)
